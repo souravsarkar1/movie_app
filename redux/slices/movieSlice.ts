@@ -3,7 +3,7 @@ import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import { MovieData } from '../types';
 
 // API Configuration
-const TMDB_READ_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI5Y2VlMmNlYTQ2MGQ1NTM0YWVjNDhhZjQwZjkyNzRlNiIsIm5iZiI6MTc2MzA2MDEyMS45Njg5OTk5LCJzdWIiOiI2OTE2Mjk5OTlkZTQ5ODhiYjQ0MGU0MjYiLCJzY29wZXMiOlsiYXBpX3JlYWQiXSwidmVyc2lvbiI6MX0.jliIGDR8Y1lkox8S8mCGRWv2MgXlWdfnwwTV3XNlAk4';
+const TMDB_READ_TOKEN = process.env.EXPO_PUBLIC_API_KEY ;
 
 // Movie state interface
 export interface MovieState {
