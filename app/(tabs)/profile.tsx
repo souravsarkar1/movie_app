@@ -1,21 +1,67 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
-import React from "react";
+import React, { useMemo, useState } from "react";
 import {
   Animated,
+  Dimensions,
   StyleSheet,
   Text,
   TouchableOpacity,
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Svg, { Circle, G, Rect, Text as SvgText } from "react-native-svg";
 import { useAppDispatch, useAppSelector } from "../../redux/hooks";
 import { logout } from "../../redux/slices/authSlice";
 
 const HEADER_MAX_HEIGHT = 220;
 const HEADER_MIN_HEIGHT = 100;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+// Genre ID to name mapping (TMDB genre IDs)
+const GENRE_MAP: { [key: number]: string } = {
+  28: "Action",
+  12: "Adventure",
+  16: "Animation",
+  35: "Comedy",
+  80: "Crime",
+  99: "Documentary",
+  18: "Drama",
+  10751: "Family",
+  14: "Fantasy",
+  36: "History",
+  27: "Horror",
+  10402: "Music",
+  9648: "Mystery",
+  10749: "Romance",
+  878: "Sci-Fi",
+  10770: "TV Movie",
+  53: "Thriller",
+  10752: "War",
+  37: "Western",
+};
+
+interface GenreData {
+  name: string;
+  count: number;
+  percentage: number;
+  color: string;
+}
+
+const CHART_COLORS = [
+  "#FF6B9D",
+  "#FEC163",
+  "#4ECDC4",
+  "#95E1D3",
+  "#F38181",
+  "#AA96DA",
+  "#FCBAD3",
+  "#A8D8EA",
+];
+
+type ChartType = 'bar' | 'pie';
 
 const ProfileScreen = () => {
   const dispatch = useAppDispatch();
@@ -23,6 +69,44 @@ const ProfileScreen = () => {
   const { watchlist } = useAppSelector((state) => state.movies);
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const scrollY = React.useRef(new Animated.Value(0)).current;
+  const [chartType, setChartType] = useState<ChartType>('bar');
+
+  // Calculate genre preferences from watchlist
+  const genreData = useMemo(() => {
+    if (watchlist.length === 0) return [];
+
+    const genreCounts: { [key: string]: number } = {};
+    let totalGenres = 0;
+
+    // Count genres from all movies in watchlist
+    watchlist.forEach((movie) => {
+      if (movie.genre_ids && Array.isArray(movie.genre_ids)) {
+        movie.genre_ids.forEach((genreId: number) => {
+          const genreName = GENRE_MAP[genreId] || "Other";
+          genreCounts[genreName] = (genreCounts[genreName] || 0) + 1;
+          totalGenres++;
+        });
+      }
+    });
+
+    // Find max count for scaling
+    const maxCount = Math.max(...Object.values(genreCounts));
+
+    // Convert to array and calculate percentages
+    const data: GenreData[] = Object.entries(genreCounts)
+      .map(([name, count], index) => ({
+        name,
+        count,
+        percentage: chartType === 'pie' 
+          ? (count / totalGenres) * 100  // Percentage of total for pie
+          : (count / maxCount) * 100,     // Scale to max for bar
+        color: CHART_COLORS[index % CHART_COLORS.length],
+      }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, chartType === 'pie' ? 6 : 8); // Top 6 for pie, 8 for bar
+
+    return data;
+  }, [watchlist, chartType]);
 
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
@@ -68,12 +152,223 @@ const ProfileScreen = () => {
     router.replace("/login");
   };
 
-  const menuItems = [
-    { icon: "person-outline", title: "Edit Profile", subtitle: "Update your details" },
-    { icon: "notifications-outline", title: "Notifications", subtitle: "Manage alerts" },
-    { icon: "settings-outline", title: "Settings", subtitle: "App preferences" },
-    { icon: "help-circle-outline", title: "Help & Support", subtitle: "Get assistance" },
-  ];
+  const renderBarChart = () => {
+    if (genreData.length === 0) {
+      return renderEmptyState();
+    }
+
+    const chartWidth = SCREEN_WIDTH - 80;
+    const barHeight = 30;
+    const barSpacing = 15;
+    const chartHeight = genreData.length * (barHeight + barSpacing);
+    const labelWidth = 90;
+    const barChartWidth = chartWidth - labelWidth;
+
+    return (
+      <View style={styles.chartWrapper}>
+        <Svg width={chartWidth} height={chartHeight}>
+          {genreData.map((genre, index) => {
+            const yPosition = index * (barHeight + barSpacing);
+            const barWidth = (genre.percentage / 100) * barChartWidth;
+
+            return (
+              <React.Fragment key={index}>
+                <SvgText
+                  x={0}
+                  y={yPosition + barHeight / 2 + 5}
+                  fontSize="12"
+                  fontWeight="600"
+                  fill="#333"
+                >
+                  {genre.name}
+                </SvgText>
+
+                <Rect
+                  x={labelWidth}
+                  y={yPosition}
+                  width={barWidth}
+                  height={barHeight}
+                  fill={genre.color}
+                  rx={15}
+                  ry={15}
+                />
+
+                <SvgText
+                  x={labelWidth + barWidth + 8}
+                  y={yPosition + barHeight / 2 + 5}
+                  fontSize="12"
+                  fontWeight="bold"
+                  fill={genre.color}
+                >
+                  {genre.count}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
+        </Svg>
+      </View>
+    );
+  };
+
+  const renderPieChart = () => {
+    if (genreData.length === 0) {
+      return renderEmptyState();
+    }
+
+    const size = SCREEN_WIDTH - 80;
+    const radius = size / 3;
+    const centerX = size / 2;
+    const centerY = size / 2;
+    
+    let currentAngle = -90; 
+
+    return (
+      <View style={styles.chartWrapper}>
+        <Svg width={size} height={size}>
+          <G>
+            {genreData.map((genre, index) => {
+              const angle = (genre.percentage / 100) * 360;
+              const startAngle = currentAngle;
+              const endAngle = currentAngle + angle;
+              
+              // Calculate arc parameters
+              const startRad = (startAngle * Math.PI) / 180;
+              const endRad = (endAngle * Math.PI) / 180;
+              
+              const x1 = centerX + radius * Math.cos(startRad);
+              const y1 = centerY + radius * Math.sin(startRad);
+              const x2 = centerX + radius * Math.cos(endRad);
+              const y2 = centerY + radius * Math.sin(endRad);
+              
+              const largeArcFlag = angle > 180 ? 1 : 0;
+
+              currentAngle = endAngle;
+
+              const midAngle = startAngle + angle / 2;
+              const midRad = (midAngle * Math.PI) / 180;
+              
+              return (
+                <G key={index}>
+                  <Circle
+                    cx={centerX}
+                    cy={centerY}
+                    r={radius}
+                    fill="transparent"
+                    stroke={genre.color}
+                    strokeWidth={radius}
+                    strokeDasharray={`${(angle / 360) * (2 * Math.PI * radius)} ${2 * Math.PI * radius}`}
+                    strokeDashoffset={-((startAngle / 360) * (2 * Math.PI * radius))}
+                    rotation={0}
+                    origin={`${centerX}, ${centerY}`}
+                  />
+                </G>
+              );
+            })}
+            
+            <Circle
+              cx={centerX}
+              cy={centerY}
+              r={radius * 0.5}
+              fill="#f8f9fa"
+            />
+            
+            <SvgText
+              x={centerX}
+              y={centerY - 10}
+              fontSize="24"
+              fontWeight="bold"
+              fill="#333"
+              textAnchor="middle"
+            >
+              {watchlist.length}
+            </SvgText>
+            <SvgText
+              x={centerX}
+              y={centerY + 15}
+              fontSize="12"
+              fill="#999"
+              textAnchor="middle"
+            >
+              Movies
+            </SvgText>
+          </G>
+        </Svg>
+
+        <View style={styles.legendContainer}>
+          {genreData.map((genre, index) => (
+            <View key={index} style={styles.legendItem}>
+              <View style={[styles.legendColor, { backgroundColor: genre.color }]} />
+              <Text style={styles.legendText}>
+                {genre.name}
+              </Text>
+              <Text style={styles.legendCount}>
+                {genre.count} ({genre.percentage.toFixed(1)}%)
+              </Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
+
+  const renderEmptyState = () => {
+    return (
+      <View style={styles.emptyChartContainer}>
+        <Ionicons name="film-outline" size={48} color="#ccc" />
+        <Text style={styles.emptyChartText}>
+          Add movies to your watchlist to see your genre preferences
+        </Text>
+      </View>
+    );
+  };
+
+  const renderChartToggle = () => {
+    return (
+      <View style={styles.toggleContainer}>
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            chartType === 'bar' && styles.toggleButtonActive
+          ]}
+          onPress={() => setChartType('bar')}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name="bar-chart" 
+            size={20} 
+            color={chartType === 'bar' ? '#fff' : '#FF6B9D'} 
+          />
+          <Text style={[
+            styles.toggleButtonText,
+            chartType === 'bar' && styles.toggleButtonTextActive
+          ]}>
+            Bar
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.toggleButton,
+            chartType === 'pie' && styles.toggleButtonActive
+          ]}
+          onPress={() => setChartType('pie')}
+          activeOpacity={0.7}
+        >
+          <Ionicons 
+            name="pie-chart" 
+            size={20} 
+            color={chartType === 'pie' ? '#fff' : '#FF6B9D'} 
+          />
+          <Text style={[
+            styles.toggleButtonText,
+            chartType === 'pie' && styles.toggleButtonTextActive
+          ]}>
+            Pie
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -182,23 +477,20 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        <View style={styles.menuContainer}>
-          {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.menuItem}
-              activeOpacity={0.7}
-            >
-              <View style={styles.menuIconContainer}>
-                <Ionicons name={item.icon as any} size={24} color="#FF6B9D" />
-              </View>
-              <View style={styles.menuText}>
-                <Text style={styles.menuTitle}>{item.title}</Text>
-                <Text style={styles.menuSubtitle}>{item.subtitle}</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={24} color="#ccc" />
-            </TouchableOpacity>
-          ))}
+        {/* Genre Preferences Chart */}
+        <View style={styles.chartContainer}>
+          <View style={styles.chartHeader}>
+            <View style={styles.chartHeaderLeft}>
+              <Ionicons 
+                name={chartType === 'bar' ? "bar-chart" : "pie-chart"} 
+                size={24} 
+                color="#FF6B9D" 
+              />
+              <Text style={styles.chartTitle}>Genre Preferences</Text>
+            </View>
+            {renderChartToggle()}
+          </View>
+          {chartType === 'bar' ? renderBarChart() : renderPieChart()}
         </View>
 
         <TouchableOpacity
@@ -316,16 +608,12 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "#999",
   },
-  menuContainer: {
-    paddingHorizontal: 20,
-  },
-  menuItem: {
-    flexDirection: "row",
-    alignItems: "center",
+  chartContainer: {
     backgroundColor: "#fff",
+    marginHorizontal: 20,
+    marginBottom: 30,
+    borderRadius: 20,
     padding: 20,
-    borderRadius: 15,
-    marginBottom: 15,
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
@@ -335,27 +623,89 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
   },
-  menuIconContainer: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(255, 107, 157, 0.1)",
-    justifyContent: "center",
+  chartHeader: {
+    flexDirection: "row",
     alignItems: "center",
-    marginRight: 15,
+    justifyContent: "space-between",
+    marginBottom: 20,
   },
-  menuText: {
-    flex: 1,
+  chartHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
   },
-  menuTitle: {
-    fontSize: 16,
-    fontWeight: "600",
+  chartTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
     color: "#333",
-    marginBottom: 3,
   },
-  menuSubtitle: {
+  toggleContainer: {
+    flexDirection: "row",
+    backgroundColor: "#f0f0f0",
+    borderRadius: 12,
+    padding: 4,
+    gap: 4,
+  },
+  toggleButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    gap: 6,
+  },
+  toggleButtonActive: {
+    backgroundColor: "#FF6B9D",
+  },
+  toggleButtonText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#FF6B9D",
+  },
+  toggleButtonTextActive: {
+    color: "#fff",
+  },
+  chartWrapper: {
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  emptyChartContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 40,
+  },
+  emptyChartText: {
+    fontSize: 14,
+    color: "#999",
+    textAlign: "center",
+    marginTop: 15,
+    paddingHorizontal: 20,
+  },
+  legendContainer: {
+    marginTop: 20,
+    width: "100%",
+  },
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+  legendColor: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    marginRight: 10,
+  },
+  legendText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#333",
+    fontWeight: "500",
+  },
+  legendCount: {
     fontSize: 12,
     color: "#999",
+    fontWeight: "600",
   },
   logoutButton: {
     marginHorizontal: 20,
