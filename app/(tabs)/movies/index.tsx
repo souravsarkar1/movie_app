@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
@@ -34,6 +35,7 @@ const HEADER_MIN_HEIGHT = 100;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
 
 const MoviesScreen = () => {
+  const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const {
     trendingMovies,
@@ -65,32 +67,37 @@ const MoviesScreen = () => {
       return;
     }
 
-  
     if (!loading && !loadingMore && hasMore) {
       dispatch(fetchMoreMovies());
       onEndReachedCalledDuringMomentum.current = true;
     }
   }, [loading, loadingMore, hasMore, dispatch, page, totalPages, trendingMovies.length]);
 
-  const handleToggleWatchlist = useCallback((movie: MovieData) => {
+  const handleToggleWatchlist = useCallback((movie: MovieData, event: any) => {
+    event.stopPropagation();
+    
     const isInWatchlist = watchlist.some((m) => m.id === movie.id);
 
     if (isInWatchlist) {
       dispatch(removeFromWatchlist(movie.id));
       Toast.show({
-        type : "error",
-        text1 : "Removed",
-        text2 : `${movie.title} removed from watchlist`
-      })
+        type: "error",
+        text1: "Removed",
+        text2: `${movie.title} removed from watchlist`
+      });
     } else {
       dispatch(addToWatchlist(movie));
       Toast.show({
-        type : "success",
-        text1 : "Added",
-        text2 : `${movie.title} added to watchlist`
-      })
+        type: "success",
+        text1: "Added",
+        text2: `${movie.title} added to watchlist`
+      });
     }
   }, [watchlist, dispatch]);
+
+  const handleMoviePress = useCallback((movieId: number) => {
+    router.push(`/movies/${movieId}`);
+  }, [router]);
 
   const isInWatchlist = useCallback((movieId: number) => {
     return watchlist.some((m) => m.id === movieId);
@@ -125,7 +132,11 @@ const MoviesScreen = () => {
     
     return (
       <View style={styles.movieItem}>
-        <TouchableOpacity activeOpacity={0.9} style={styles.movieCard}>
+        <TouchableOpacity 
+          activeOpacity={0.9} 
+          style={styles.movieCard}
+          onPress={() => handleMoviePress(item.id)}
+        >
           <Image
             source={{ uri: `${IMAGE_BASE_URL}${item.poster_path}` }}
             style={styles.moviePoster}
@@ -156,7 +167,7 @@ const MoviesScreen = () => {
 
         <TouchableOpacity
           style={styles.watchlistButton}
-          onPress={() => handleToggleWatchlist(item)}
+          onPress={(e) => handleToggleWatchlist(item, e)}
           activeOpacity={0.7}
         >
           <Ionicons
@@ -167,7 +178,7 @@ const MoviesScreen = () => {
         </TouchableOpacity>
       </View>
     );
-  }, [watchlist, handleToggleWatchlist]);
+  }, [watchlist, handleToggleWatchlist, handleMoviePress]);
 
   const renderFooter = useCallback(() => {
     if (!loadingMore) return null;
@@ -354,19 +365,6 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 20,
     paddingHorizontal: 20,
-  },
-  errorContainer: {
-    backgroundColor: "#ffebee",
-    padding: 15,
-    marginHorizontal: 15,
-    marginTop: HEADER_MAX_HEIGHT + 10,
-    marginBottom: 10,
-    borderRadius: 10,
-  },
-  errorText: {
-    color: "#c62828",
-    textAlign: "center",
-    fontSize: 14,
   },
   flatListContent: {
     paddingBottom: 100,

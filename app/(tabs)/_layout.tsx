@@ -2,7 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import { Tabs } from "expo-router";
+import { Tabs, usePathname } from "expo-router";
 import { useEffect, useRef } from "react";
 import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
@@ -81,6 +81,10 @@ const TabBarButton = ({ children, onPress, accessibilityState }: any) => {
 };
 
 const TabScreen = () => {
+  const pathname = usePathname();
+  
+  const isMovieDetailsScreen = pathname?.includes('/movies/') && pathname !== '/movies';
+  
   return (
     <Tabs
       screenOptions={{
@@ -88,7 +92,7 @@ const TabScreen = () => {
         tabBarShowLabel: true,
         tabBarActiveTintColor: "#FF6B9D",
         tabBarInactiveTintColor: "#999",
-        tabBarStyle: {
+        tabBarStyle: isMovieDetailsScreen ? { display: 'none' } : {
           position: "absolute",
           bottom: 25,
           left: 20,

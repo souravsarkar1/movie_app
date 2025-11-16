@@ -11,17 +11,19 @@ import {
   REHYDRATE,
 } from 'redux-persist';
 import authReducer from './slices/authSlice';
+import movieDetailsReducer from './slices/movieDetailsSlice';
 import movieReducer from './slices/movieSlice';
 
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'movies'],
+  whitelist: ['auth', 'movies']
 };
 
 const rootReducer = combineReducers({
   auth: authReducer,
   movies: movieReducer,
+  movieDetails: movieDetailsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
