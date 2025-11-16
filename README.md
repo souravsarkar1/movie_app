@@ -352,7 +352,6 @@ Contributions, issues, and feature requests are welcome!
 
 ## 👨‍💻 Author
 
-Your Name
 - GitHub: (https://github.com/souravsarkar1)
 - LinkedIn: (https://www.linkedin.com/in/sourav-sarkar-2b5a2a212/)
 - Portfolio: (https://souravsarkar1.github.io/)
