@@ -24,7 +24,6 @@ const ProfileScreen = () => {
   const scaleAnim = React.useRef(new Animated.Value(0)).current;
   const scrollY = React.useRef(new Animated.Value(0)).current;
 
-  // Animated Header Values
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
@@ -78,7 +77,6 @@ const ProfileScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Sticky Animated Header */}
       <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
         <LinearGradient
           colors={["#FF6B9D", "#FEC163"]}

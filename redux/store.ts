@@ -13,23 +13,19 @@ import {
 import authReducer from './slices/authSlice';
 import movieReducer from './slices/movieSlice';
 
-// Persist configuration
 const persistConfig = {
   key: 'root',
   storage: AsyncStorage,
-  whitelist: ['auth', 'movies'], // Persist both auth and movies slice
+  whitelist: ['auth', 'movies'],
 };
 
-// Combine reducers
 const rootReducer = combineReducers({
   auth: authReducer,
   movies: movieReducer,
 });
 
-// Create persisted reducer
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 
-// Configure store
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
@@ -40,9 +36,7 @@ export const store = configureStore({
     }),
 });
 
-// Create persistor
 export const persistor = persistStore(store);
 
-// Export types
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

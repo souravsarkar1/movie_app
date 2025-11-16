@@ -3,18 +3,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { clearError, registerUser } from '../redux/slices/authSlice';
 
@@ -39,29 +39,45 @@ const SignupScreen = () => {
 
   useEffect(() => {
     if (error) {
-      Alert.alert('Signup Failed', error);
+     Toast.show({
+             type : "error",
+             text1 : 'Signup Failed'
+           })
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
   const handleSignup = () => {
     if (!name || !email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+       Toast.show({
+             type : "error",
+             text1 : 'Please fill in all fields'
+           })
       return;
     }
 
     if (!email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email');
+
+       Toast.show({
+             type : "error",
+             text1 : 'Please enter a valid email'
+           })
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+       Toast.show({
+             type : "error",
+             text1 : 'Password must be at least 6 characters'
+           })
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+       Toast.show({
+             type : "error",
+             text1 : 'Passwords do not match'
+           })
       return;
     }
 
@@ -101,7 +117,6 @@ const SignupScreen = () => {
             <Text style={styles.title}>Sign up</Text>
             <View style={styles.underline} />
 
-            {/* Name Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Full Name</Text>
               <View style={styles.inputWrapper}>
@@ -118,7 +133,6 @@ const SignupScreen = () => {
               </View>
             </View>
 
-            {/* Email Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWrapper}>
@@ -136,7 +150,6 @@ const SignupScreen = () => {
               </View>
             </View>
 
-            {/* Password Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputWrapper}>
@@ -160,7 +173,6 @@ const SignupScreen = () => {
               </View>
             </View>
 
-            {/* Confirm Password Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password</Text>
               <View style={styles.inputWrapper}>
@@ -184,7 +196,6 @@ const SignupScreen = () => {
               </View>
             </View>
 
-            {/* Signup Button */}
             <TouchableOpacity
               style={[styles.signupButton, loading && styles.signupButtonDisabled]}
               onPress={handleSignup}
@@ -205,7 +216,6 @@ const SignupScreen = () => {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Login Link */}
             <View style={styles.footer}>
               <Text style={styles.footerText}>Already have an Account ? </Text>
               <TouchableOpacity onPress={() => router.push('/login')}>

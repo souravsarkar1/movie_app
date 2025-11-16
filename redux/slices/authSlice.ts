@@ -2,7 +2,6 @@ import { createSlice } from '@reduxjs/toolkit';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, User, UserWithPassword, LoginCredentials, RegisterData } from '../types';
 
-// Initial state
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
@@ -40,23 +39,19 @@ const authSlice = createSlice({
 
 export const { setLoading, setError, setUser, logout, clearError } = authSlice.actions;
 
-// Thunk actions (manual)
 export const registerUser = (userData: RegisterData) => async (dispatch: any) => {
   try {
     dispatch(setLoading(true));
 
-    // Get existing users from AsyncStorage
     const usersJson = await AsyncStorage.getItem('users');
     const users: UserWithPassword[] = usersJson ? JSON.parse(usersJson) : [];
 
-    // Check if user already exists
     const userExists = users.find((u: UserWithPassword) => u.email === userData.email);
     if (userExists) {
       dispatch(setError('User with this email already exists'));
       return;
     }
 
-    // Create new user
     const newUser: UserWithPassword = {
       id: Date.now().toString(),
       name: userData.name,
@@ -65,11 +60,9 @@ export const registerUser = (userData: RegisterData) => async (dispatch: any) =>
       createdAt: new Date().toISOString(),
     };
 
-    // Save to users array
     users.push(newUser);
     await AsyncStorage.setItem('users', JSON.stringify(users));
 
-    // Return user without password
     const { password, ...userWithoutPassword } = newUser;
     dispatch(setUser(userWithoutPassword));
   } catch (error) {
@@ -81,11 +74,9 @@ export const loginUser = (credentials: LoginCredentials) => async (dispatch: any
   try {
     dispatch(setLoading(true));
 
-    // Get users from AsyncStorage
     const usersJson = await AsyncStorage.getItem('users');
     const users: UserWithPassword[] = usersJson ? JSON.parse(usersJson) : [];
 
-    // Find user with matching credentials
     const user = users.find(
       (u: UserWithPassword) => u.email === credentials.email && u.password === credentials.password
     );
@@ -95,7 +86,6 @@ export const loginUser = (credentials: LoginCredentials) => async (dispatch: any
       return;
     }
 
-    // Return user without password
     const { password, ...userWithoutPassword } = user;
     dispatch(setUser(userWithoutPassword));
   } catch (error) {

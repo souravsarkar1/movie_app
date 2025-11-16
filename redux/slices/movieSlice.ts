@@ -5,7 +5,6 @@ import { MovieData } from '../types';
 // API Configuration
 const TMDB_READ_TOKEN = process.env.EXPO_PUBLIC_API_KEY ;
 
-// Movie state interface
 export interface MovieState {
   trendingMovies: MovieData[];
   watchlist: MovieData[];
@@ -18,7 +17,6 @@ export interface MovieState {
   hasMore: boolean; 
 }
 
-// Initial state
 const initialState: MovieState = {
   trendingMovies: [],
   watchlist: [],
@@ -31,7 +29,6 @@ const initialState: MovieState = {
   hasMore: true,
 };
 
-// Async thunk to fetch trending movies with page parameter
 export const fetchTrendingMovies = createAsyncThunk(
   'movies/fetchTrending',
   async (page: number = 1, { rejectWithValue }) => {
@@ -63,7 +60,6 @@ export const fetchTrendingMovies = createAsyncThunk(
   }
 );
 
-// New: Async thunk specifically for loading more movies (pagination)
 export const fetchMoreMovies = createAsyncThunk(
   'movies/fetchMore',
   async (_, { getState, rejectWithValue }) => {
@@ -71,16 +67,10 @@ export const fetchMoreMovies = createAsyncThunk(
       const state = getState() as { movies: MovieState };
       const nextPage = state.movies.page + 1;
       
-      // Don't fetch if already loading more or if we've reached the end
-      if (state.movies.loadingMore) {
-        return rejectWithValue('Already loading');
-      }
-      
       if (nextPage > state.movies.totalPages) {
         return rejectWithValue('No more pages available');
       }
 
-      console.log(`Fetching page ${nextPage}...`);
 
       const response = await fetch(
         `https://api.themoviedb.org/3/trending/movie/week?page=${nextPage}`,
@@ -98,7 +88,6 @@ export const fetchMoreMovies = createAsyncThunk(
       }
 
       const data = await response.json();
-      console.log(`Fetched ${data.results.length} movies for page ${nextPage}`);
       
       return {
         movies: data.results,
@@ -106,13 +95,11 @@ export const fetchMoreMovies = createAsyncThunk(
         totalPages: data.total_pages,
       };
     } catch (error) {
-      console.error('Error fetching more movies:', error);
       return rejectWithValue(error instanceof Error ? error.message : 'An error occurred');
     }
   }
 );
 
-// Async thunk to load watchlist from AsyncStorage
 export const loadWatchlist = createAsyncThunk(
   'movies/loadWatchlist',
   async (_, { rejectWithValue }) => {
@@ -126,7 +113,6 @@ export const loadWatchlist = createAsyncThunk(
   }
 );
 
-// Async thunk to add movie to watchlist
 export const addToWatchlist = createAsyncThunk(
   'movies/addToWatchlist',
   async (movie: MovieData, { getState, rejectWithValue }) => {
@@ -141,7 +127,6 @@ export const addToWatchlist = createAsyncThunk(
   }
 );
 
-// Async thunk to remove movie from watchlist
 export const removeFromWatchlist = createAsyncThunk(
   'movies/removeFromWatchlist',
   async (movieId: number, { getState, rejectWithValue }) => {
@@ -173,7 +158,6 @@ const movieSlice = createSlice({
     },
   },
   extraReducers: (builder) => {
-    // Fetch trending movies (initial load or refresh)
     builder
       .addCase(fetchTrendingMovies.pending, (state) => {
         state.loading = true;
@@ -183,7 +167,6 @@ const movieSlice = createSlice({
         state.loading = false;
         state.refreshing = false;
         
-        // Replace the movies for page 1 (refresh scenario)
         state.trendingMovies = action.payload.movies;
         state.page = action.payload.page;
         state.totalPages = action.payload.totalPages;
@@ -195,7 +178,6 @@ const movieSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Fetch more movies (pagination)
     builder
       .addCase(fetchMoreMovies.pending, (state) => {
         state.loadingMore = true;
@@ -204,22 +186,20 @@ const movieSlice = createSlice({
       .addCase(fetchMoreMovies.fulfilled, (state, action) => {
         state.loadingMore = false;
         
-        // Append new movies to existing list
         state.trendingMovies = [...state.trendingMovies, ...action.payload.movies];
         state.page = action.payload.page;
         state.totalPages = action.payload.totalPages;
-        state.hasMore = action.payload.page < action.payload.totalPages;
+        state.hasMore = action.payload.page < action.payload.totalPages;   
       })
       .addCase(fetchMoreMovies.rejected, (state, action) => {
         state.loadingMore = false;
-        state.hasMore = false;
-        // Don't set error for "no more pages" case
-        if (action.payload !== 'No more pages available') {
+        if (action.payload === 'No more pages available') {
+          state.hasMore = false;
+        } else {
           state.error = action.payload as string;
         }
       });
 
-    // Load watchlist
     builder
       .addCase(loadWatchlist.fulfilled, (state, action) => {
         state.watchlist = action.payload;
@@ -228,7 +208,6 @@ const movieSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Add to watchlist
     builder
       .addCase(addToWatchlist.fulfilled, (state, action) => {
         state.watchlist.push(action.payload);
@@ -237,7 +216,6 @@ const movieSlice = createSlice({
         state.error = action.payload as string;
       });
 
-    // Remove from watchlist
     builder
       .addCase(removeFromWatchlist.fulfilled, (state, action) => {
         state.watchlist = state.watchlist.filter((movie) => movie.id !== action.payload);

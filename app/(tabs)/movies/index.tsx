@@ -3,7 +3,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import React, { useCallback, useEffect, useRef } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Animated,
   Dimensions,
   Image,
@@ -14,6 +13,7 @@ import {
   View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import {
   addToWatchlist,
@@ -44,12 +44,13 @@ const MoviesScreen = () => {
     refreshing,
     hasMore,
     page,
+    totalPages,
   } = useSelector((state: RootState) => state.movies);
 
   const scrollY = useRef(new Animated.Value(0)).current;
+  const onEndReachedCalledDuringMomentum = useRef(true);
 
   useEffect(() => {
-    // Load initial data
     dispatch(fetchTrendingMovies(1));
     dispatch(loadWatchlist());
   }, [dispatch]);
@@ -60,23 +61,34 @@ const MoviesScreen = () => {
   }, [dispatch]);
 
   const handleLoadMore = useCallback(() => {
-    console.log('Load More Called:', { loading, loadingMore, hasMore, page });
-    
-    if (!loading && !loadingMore && hasMore) {
-      console.log('Dispatching fetchMoreMovies...');
-      dispatch(fetchMoreMovies());
+    if (onEndReachedCalledDuringMomentum.current) {
+      return;
     }
-  }, [loading, loadingMore, hasMore, dispatch, page]);
+
+  
+    if (!loading && !loadingMore && hasMore) {
+      dispatch(fetchMoreMovies());
+      onEndReachedCalledDuringMomentum.current = true;
+    }
+  }, [loading, loadingMore, hasMore, dispatch, page, totalPages, trendingMovies.length]);
 
   const handleToggleWatchlist = useCallback((movie: MovieData) => {
     const isInWatchlist = watchlist.some((m) => m.id === movie.id);
 
     if (isInWatchlist) {
       dispatch(removeFromWatchlist(movie.id));
-      Alert.alert("Removed", `${movie.title} removed from watchlist`);
+      Toast.show({
+        type : "error",
+        text1 : "Removed",
+        text2 : `${movie.title} removed from watchlist`
+      })
     } else {
       dispatch(addToWatchlist(movie));
-      Alert.alert("Added", `${movie.title} added to watchlist`);
+      Toast.show({
+        type : "success",
+        text1 : "Added",
+        text2 : `${movie.title} added to watchlist`
+      })
     }
   }, [watchlist, dispatch]);
 
@@ -84,7 +96,6 @@ const MoviesScreen = () => {
     return watchlist.some((m) => m.id === movieId);
   }, [watchlist]);
 
-  // Animated Header Values
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
@@ -143,7 +154,6 @@ const MoviesScreen = () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Watchlist Toggle Button */}
         <TouchableOpacity
           style={styles.watchlistButton}
           onPress={() => handleToggleWatchlist(item)}
@@ -214,7 +224,6 @@ const MoviesScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Sticky Animated Header */}
       <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
         <LinearGradient
           colors={["#FF6B9D", "#FEC163"]}
@@ -239,7 +248,7 @@ const MoviesScreen = () => {
                     { opacity: headerSubtitleOpacity }
                   ]}
                 >
-                  {trendingMovies.length} movies • Page {page}
+                  {trendingMovies.length} movies • Page {page} of {totalPages}
                 </Animated.Text>
               </View>
               <Animated.View style={{ transform: [{ scale: searchButtonScale }] }}>
@@ -255,7 +264,6 @@ const MoviesScreen = () => {
         </LinearGradient>
       </Animated.View>
 
-      {/* Movies List */}
       <Animated.FlatList
         data={trendingMovies}
         renderItem={renderMovieItem}
@@ -275,7 +283,10 @@ const MoviesScreen = () => {
           />
         }
         onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.3}
+        onEndReachedThreshold={0.5}
+        onMomentumScrollBegin={() => {
+          onEndReachedCalledDuringMomentum.current = false;
+        }}
         contentContainerStyle={[
           styles.flatListContent,
           { paddingTop: HEADER_MAX_HEIGHT + 15 }

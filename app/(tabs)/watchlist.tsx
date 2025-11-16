@@ -46,7 +46,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
-    // Entrance animation with stagger
     Animated.parallel([
       Animated.timing(opacity, {
         toValue: 1,
@@ -77,7 +76,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
       },
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dx < SWIPE_THRESHOLD) {
-          // Delete animation
           Animated.timing(translateX, {
             toValue: -width,
             duration: 300,
@@ -86,7 +84,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
             onDelete(movie.id);
           });
         } else {
-          // Bounce back
           Animated.spring(translateX, {
             toValue: 0,
             tension: 50,
@@ -139,7 +136,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
         },
       ]}
     >
-      {/* Delete background */}
       <View style={styles.deleteBackground}>
         <LinearGradient
           colors={["#FF6B9D", "#FF3D71"]}
@@ -152,7 +148,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
         </LinearGradient>
       </View>
 
-      {/* Swipeable content */}
       <Animated.View
         style={[
           styles.itemContent,
@@ -163,7 +158,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
         {...panResponder.panHandlers}
       >
         <TouchableOpacity activeOpacity={0.95} style={styles.movieCard}>
-          {/* Poster */}
           <View style={styles.posterContainer}>
             <Image
               source={{ uri: `${IMAGE_BASE_URL}${movie.poster_path}` }}
@@ -176,13 +170,11 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
             />
           </View>
 
-          {/* Movie Info */}
           <View style={styles.movieInfo}>
             <Text style={styles.movieTitle} numberOfLines={2}>
               {movie.title}
             </Text>
 
-            {/* Rating and Year */}
             <View style={styles.metaContainer}>
               <View style={styles.ratingBadge}>
                 <Ionicons name="star" size={12} color="#FFD700" />
@@ -200,12 +192,10 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
               </View>
             </View>
 
-            {/* Overview */}
             <Text style={styles.overview} numberOfLines={2}>
               {movie.overview || "No description available"}
             </Text>
 
-            {/* Bottom Info */}
             <View style={styles.bottomInfo}>
               <View style={styles.genreBadge}>
                 <Ionicons name="film-outline" size={11} color="#4CAF50" />
@@ -222,7 +212,6 @@ const AnimatedWatchlistItem: React.FC<WatchlistItemProps> = ({
             </View>
           </View>
 
-          {/* Delete Button */}
           <TouchableOpacity
             style={styles.deleteButton}
             onPress={handleDelete}
@@ -244,7 +233,6 @@ const WatchlistScreen = () => {
   const scrollY = useRef(new Animated.Value(0)).current;
   const [sortBy, setSortBy] = useState<"recent" | "rating" | "title">("recent");
 
-  // Animated Header Values
   const headerHeight = scrollY.interpolate({
     inputRange: [0, HEADER_SCROLL_DISTANCE],
     outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
@@ -341,7 +329,6 @@ const WatchlistScreen = () => {
   if (watchlist.length === 0) {
     return (
       <View style={styles.container}>
-        {/* Sticky Animated Header */}
         <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
           <LinearGradient
             colors={["#FF6B9D", "#FEC163"]}
@@ -442,7 +429,6 @@ const WatchlistScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Sticky Animated Header */}
       <Animated.View style={[styles.stickyHeader, { height: headerHeight }]}>
         <LinearGradient
           colors={["#FF6B9D", "#FEC163"]}
@@ -477,7 +463,6 @@ const WatchlistScreen = () => {
               </Animated.View>
             </View>
 
-            {/* Sort Options */}
             <Animated.View 
               style={[
                 styles.sortContainer,
@@ -521,7 +506,6 @@ const WatchlistScreen = () => {
           ))}
         </Animated.View>
 
-        {/* Bottom spacing */}
         <View style={{ height: 120 }} />
       </Animated.ScrollView>
     </View>

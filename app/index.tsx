@@ -11,13 +11,11 @@ export default function Index() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const isFocused = useIsFocused();
 
-  // Animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const slideAnim = useRef(new Animated.Value(50)).current;
 
   useEffect(() => {
-    // Start animations
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -40,14 +38,13 @@ export default function Index() {
 
   useFocusEffect(() => {
     if (isFocused) {
-      // Add a small delay for smooth transition
       const timer = setTimeout(() => {
         if (isAuthenticated) {
           router.replace("/(tabs)/movies");
         } else {
           router.replace("/login");
         }
-      }, 2000); // 2 seconds splash
+      }, 2000); 
 
       return () => clearTimeout(timer);
     }
@@ -55,14 +52,12 @@ export default function Index() {
 
   return (
     <View style={styles.container}>
-      {/* Gradient Background */}
       <LinearGradient
         colors={["#FF9A9E", "#FAD0C4", "#FFDDE1"]}
         style={styles.gradient}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        {/* Animated Background Circles */}
         <View style={styles.circleContainer}>
           <View style={[styles.circle, styles.circle1]} />
           <View style={[styles.circle, styles.circle2]} />
@@ -70,7 +65,6 @@ export default function Index() {
           <View style={[styles.circle, styles.circle4]} />
         </View>
 
-        {/* Main Content */}
         <Animated.View
           style={[
             styles.content,
@@ -80,7 +74,6 @@ export default function Index() {
             },
           ]}
         >
-          {/* App Icon/Logo */}
           <View style={styles.logoContainer}>
             <LinearGradient
               colors={["#FF6B9D", "#FEC163"]}
@@ -92,7 +85,6 @@ export default function Index() {
             </LinearGradient>
           </View>
 
-          {/* App Name */}
           <Animated.View
             style={[
               styles.textContainer,
@@ -106,7 +98,6 @@ export default function Index() {
             <Text style={styles.tagline}>Your Movie Community</Text>
           </Animated.View>
 
-          {/* Loading Indicator */}
           <Animated.View
             style={[
               styles.loadingContainer,
@@ -123,7 +114,6 @@ export default function Index() {
           </Animated.View>
         </Animated.View>
 
-        {/* Bottom Wave */}
         <View style={styles.bottomWave}>
           <LinearGradient
             colors={["transparent", "rgba(255, 255, 255, 0.1)"]}

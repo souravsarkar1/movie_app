@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- HTTPS is already allowed by default.
+         Keeping this minimal since TMDB uses HTTPS -->
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.themoviedb.org</domain>
+    </domain-config>
+
+    <base-config cleartextTrafficPermitted="false"/>
+</network-security-config>

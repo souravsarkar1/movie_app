@@ -3,17 +3,17 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Dimensions,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
+import Toast from 'react-native-toast-message';
 import { useAppDispatch, useAppSelector } from '../redux/hooks';
 import { clearError, loginUser } from '../redux/slices/authSlice';
 
@@ -28,29 +28,36 @@ const LoginScreen = () => {
   const dispatch = useAppDispatch();
   const { loading, error, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // Navigate to Home if authenticated
   useEffect(() => {
     if (isAuthenticated) {
       router.replace('/');
     }
   }, [isAuthenticated]);
 
-  // Show error alert
   useEffect(() => {
     if (error) {
-      Alert.alert('Login Failed', error);
+      Toast.show({
+        type : "error",
+        text1 : 'Login Failed'
+      })
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
   const handleLogin = () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Toast.show({
+        type : "error",
+        text1 : 'Please fill in all fields'
+      })
       return;
     }
 
     if (!email.includes('@')) {
-      Alert.alert('Error', 'Please enter a valid email');
+      Toast.show({
+        type : "error",
+        text1 : 'Please enter a valid email'
+      })
       return;
     }
 
@@ -59,14 +66,13 @@ const LoginScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Top Gradient Background */}
+     
       <LinearGradient
         colors={['#FF9A9E', '#FAD0C4', '#FFF']}
         style={styles.gradientTop}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       >
-        {/* Abstract Pattern Overlay */}
         <View style={styles.patternContainer}>
           <View style={[styles.circle, styles.circle1]} />
           <View style={[styles.circle, styles.circle2]} />
@@ -75,7 +81,6 @@ const LoginScreen = () => {
         </View>
       </LinearGradient>
 
-      {/* White Content Area */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.contentContainer}
@@ -84,7 +89,6 @@ const LoginScreen = () => {
           <Text style={styles.title}>Sign in</Text>
           <View style={styles.underline} />
 
-          {/* Email Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Email</Text>
             <View style={styles.inputWrapper}>
@@ -102,7 +106,6 @@ const LoginScreen = () => {
             </View>
           </View>
 
-          {/* Password Input */}
           <View style={styles.inputGroup}>
             <Text style={styles.label}>Password</Text>
             <View style={styles.inputWrapper}>
@@ -126,7 +129,6 @@ const LoginScreen = () => {
             </View>
           </View>
 
-          {/* Remember Me & Forgot Password */}
           <View style={styles.optionsRow}>
             <TouchableOpacity
               style={styles.rememberMeContainer}
@@ -143,7 +145,6 @@ const LoginScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Login Button */}
           <TouchableOpacity
             style={[styles.loginButton, loading && styles.loginButtonDisabled]}
             onPress={handleLogin}
@@ -164,7 +165,6 @@ const LoginScreen = () => {
             </LinearGradient>
           </TouchableOpacity>
 
-          {/* Sign Up Link */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an Account ? </Text>
             <TouchableOpacity onPress={() => router.push('/signup')}>

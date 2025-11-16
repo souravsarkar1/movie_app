@@ -1,10 +1,11 @@
 import { Ionicons } from "@expo/vector-icons";
+import { BlurView } from "expo-blur";
 import * as Haptics from "expo-haptics";
+import { LinearGradient } from "expo-linear-gradient";
 import { Tabs } from "expo-router";
 import { useEffect, useRef } from "react";
-import { Animated, StyleSheet, TouchableOpacity, View } from "react-native";
+import { Animated, Platform, StyleSheet, TouchableOpacity, View } from "react-native";
 
-// Custom Tab Bar Button with Animation
 const TabBarButton = ({ children, onPress, accessibilityState }: any) => {
   const focused = accessibilityState?.selected;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -12,7 +13,6 @@ const TabBarButton = ({ children, onPress, accessibilityState }: any) => {
 
   useEffect(() => {
     if (focused) {
-      // Trigger haptic feedback when tab becomes focused
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       
       Animated.parallel([
@@ -48,7 +48,6 @@ const TabBarButton = ({ children, onPress, accessibilityState }: any) => {
   }, [focused]);
 
   const handlePress = () => {
-    // Trigger haptic feedback on press
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onPress?.();
   };
@@ -67,7 +66,14 @@ const TabBarButton = ({ children, onPress, accessibilityState }: any) => {
           },
         ]}
       >
-        {focused && <View style={styles.focusedBg} />}
+        {focused && (
+          <LinearGradient
+            colors={['rgba(255, 107, 157, 0.3)', 'rgba(254, 193, 99, 0.3)']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.focusedBg}
+          />
+        )}
         {children}
       </Animated.View>
     </TouchableOpacity>
@@ -88,12 +94,14 @@ const TabScreen = () => {
           left: 20,
           right: 20,
           elevation: 0,
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(255, 255, 255, 0.7)',
           borderRadius: 25,
           height: 70,
           paddingBottom: 10,
           paddingTop: 10,
           borderTopWidth: 0,
+          borderWidth: Platform.OS === 'ios' ? 1 : 0,
+          borderColor: 'rgba(255, 255, 255, 0.3)',
           shadowColor: "#FF6B9D",
           shadowOffset: {
             width: 0,
@@ -101,6 +109,7 @@ const TabScreen = () => {
           },
           shadowOpacity: 0.3,
           shadowRadius: 20,
+          overflow: 'hidden',
         },
         tabBarLabelStyle: {
           fontSize: 12,
@@ -108,6 +117,47 @@ const TabScreen = () => {
           marginTop: 4,
         },
         tabBarButton: (props) => <TabBarButton {...props} />,
+        tabBarBackground: () => (
+          <View style={styles.tabBarBackground}>
+            {Platform.OS === 'ios' ? (
+              <BlurView
+                intensity={80}
+                tint="light"
+                style={styles.blurView}
+              >
+                <LinearGradient
+                  colors={[
+                    'rgba(255, 255, 255, 0.4)',
+                    'rgba(255, 255, 255, 0.3)',
+                  ]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.gradientOverlay}
+                />
+              </BlurView>
+            ) : (
+              <LinearGradient
+                colors={[
+                  'rgba(255, 255, 255, 0.95)',
+                  'rgba(255, 255, 255, 0.9)',
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.androidBackground}
+              />
+            )}
+            <LinearGradient
+              colors={[
+                'transparent',
+                'rgba(255, 255, 255, 0.2)',
+                'transparent',
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.shimmer}
+            />
+          </View>
+        ),
       }}
     >
       <Tabs.Screen
@@ -174,10 +224,9 @@ const styles = StyleSheet.create({
   },
   focusedBg: {
     position: "absolute",
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: "rgba(255, 107, 157, 0.15)",
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   iconWrapper: {
     alignItems: "center",
@@ -189,6 +238,35 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: "#FF6B9D",
     marginTop: 4,
+  },
+  tabBarBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 25,
+    overflow: 'hidden',
+  },
+  blurView: {
+    flex: 1,
+    borderRadius: 25,
+  },
+  gradientOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    borderRadius: 25,
+  },
+  androidBackground: {
+    flex: 1,
+    borderRadius: 25,
+  },
+  shimmer: {
+    position: 'absolute',
+    top: 0,
+    left: -100,
+    right: 0,
+    bottom: 0,
+    width: '200%',
   },
 });
 

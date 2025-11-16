@@ -1,4 +1,3 @@
-// User type
 export interface User {
   id: string;
   name: string;
@@ -6,12 +5,10 @@ export interface User {
   createdAt: string;
 }
 
-// User with password (for storage only)
 export interface UserWithPassword extends User {
   password: string;
 }
 
-// Auth state type
 export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
@@ -19,13 +16,11 @@ export interface AuthState {
   error: string | null;
 }
 
-// Login credentials
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-// Registration data
 export interface RegisterData {
   name: string;
   email: string;
