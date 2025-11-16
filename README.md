@@ -358,6 +358,11 @@ Contributions, issues, and feature requests are welcome!
 
 ## 🙏 Acknowledgments
 
+## Video Link
+
+[![Watch Video](https://vumbnail.com/1137386118.jpg)](https://vimeo.com/1137386118)
+
+
 - [TMDB API](https://www.themoviedb.org/) for movie data
 - [Expo](https://expo.dev/) for the amazing development experience
 - [Redux Toolkit](https://redux-toolkit.js.org/) for state management
